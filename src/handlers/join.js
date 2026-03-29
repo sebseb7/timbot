@@ -4,7 +4,7 @@ import { SUPPORTED_LANGUAGES, COMMANDS } from '../config.js';
 
 export function createJoinHandler() {
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+    const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
     const code = ctx.message.text.split(' ')[1]?.trim().toUpperCase();
 
@@ -15,7 +15,7 @@ export function createJoinHandler() {
       return;
     }
 
-    const result = joinConversation(code, ctx.from.id);
+    const result = await joinConversation(code, ctx.from.id);
 
     if (result.error) {
       let errorKey;
@@ -29,7 +29,7 @@ export function createJoinHandler() {
       return;
     }
 
-    const partner = getConversationPartnerInfo(code, ctx.from.id);
+    const partner = await getConversationPartnerInfo(code, ctx.from.id);
 
     let partnerInfo = '';
     if (partner) {
@@ -47,7 +47,7 @@ export function createJoinHandler() {
       const creatorId = result.conversation.creator_id;
       const joinedUsername = ctx.from.username || ctx.from.first_name || `User ${ctx.from.id}`;
       const joinedUserLang = SUPPORTED_LANGUAGES[lang]?.native || lang;
-      const pLang = getUserLanguage(creatorId);
+      const pLang = await getUserLanguage(creatorId);
 
       await ctx.telegram.sendMessage(
         creatorId,

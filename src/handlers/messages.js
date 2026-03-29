@@ -7,7 +7,7 @@ import { prepareVoiceData, transcribeVoice, translateVoiceToAudio, translateText
 
 export function createMessageHandler(openai) {
   return async (ctx, originalText, isVoice = false, forceSelection = false, voiceBase64 = null) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+    const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 
     // For voice in audio mode, we don't have text yet - it will be translated after partner selection
@@ -17,7 +17,7 @@ export function createMessageHandler(openai) {
       return;
     }
 
-    const conversations = getUserConversations(ctx.from.id);
+    const conversations = await getUserConversations(ctx.from.id);
     const activeConversations = conversations.filter(c => c.participant_id !== null);
 
     if (activeConversations.length === 0) {
@@ -28,7 +28,7 @@ export function createMessageHandler(openai) {
     // Voice messages always show partner selection
     if (isVoice && voiceBase64) {
       const textForStore = typeof originalText === 'string' ? originalText : '';
-      const keyboard = createPartnerSelectionKeyboard(ctx.from.id, textForStore, null, voiceBase64);
+      const keyboard = await createPartnerSelectionKeyboard(ctx.from.id, textForStore, null, voiceBase64);
       await ctx.reply(translateGUI('select_partner', lang), Markup.inlineKeyboard(keyboard));
       return;
     }
@@ -36,15 +36,15 @@ export function createMessageHandler(openai) {
     // Text messages - send directly if single partner
     if (activeConversations.length === 1 && !forceSelection) {
       const conversation = activeConversations[0];
-      const partner = getConversationPartnerInfo(conversation.id, ctx.from.id);
+      const partner = await getConversationPartnerInfo(conversation.id, ctx.from.id);
 
       if (!partner) {
         await ctx.reply(translateGUI('waiting_partner', lang));
         return;
       }
 
-      const partnerLang = getUserLanguage(partner.user_id);
-      const partnerOutput = getUserOutput(partner.user_id);
+      const partnerLang = await getUserLanguage(partner.user_id);
+      const partnerOutput = await getUserOutput(partner.user_id);
 
       // Receiver wants audio: translate text and generate audio
       if (partnerOutput === 'audio') {
@@ -86,7 +86,7 @@ export function createMessageHandler(openai) {
       }
     } else {
       // Multiple conversations - show partner selection
-      const keyboard = createPartnerSelectionKeyboard(ctx.from.id, originalText, null, voiceBase64);
+      const keyboard = await createPartnerSelectionKeyboard(ctx.from.id, originalText, null, voiceBase64);
       await ctx.reply(translateGUI('select_partner', lang), Markup.inlineKeyboard(keyboard));
     }
   };
@@ -96,11 +96,11 @@ export function createVoiceHandler(openai) {
   const handleMessage = createMessageHandler(openai);
 
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+    const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 
     // Get conversations to check if any exist
-    const conversations = getUserConversations(ctx.from.id);
+    const conversations = await getUserConversations(ctx.from.id);
     const activeConversations = conversations.filter(c => c.participant_id !== null);
 
     if (activeConversations.length === 0) {
@@ -131,9 +131,9 @@ export function createVoiceHandler(openai) {
 
 // Called from both actions.js (callback query) and createMessageHandler (message context)
 export async function handleVoiceAudioSend(ctx, partnerId, voiceBase64, openai) {
-  const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+  const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
   const lang = user.language;
-  const partnerLang = getUserLanguage(partnerId);
+  const partnerLang = await getUserLanguage(partnerId);
   const isCallback = !!ctx.callbackQuery;
 
   try {
@@ -168,9 +168,9 @@ export async function handleVoiceAudioSend(ctx, partnerId, voiceBase64, openai) 
 
 // Text-to-audio: translate text and generate audio for receiver who wants audio
 export async function handleTextToAudioSend(ctx, partnerId, text, openai) {
-  const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+  const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
   const lang = user.language;
-  const partnerLang = getUserLanguage(partnerId);
+  const partnerLang = await getUserLanguage(partnerId);
   const isCallback = !!ctx.callbackQuery;
 
   try {

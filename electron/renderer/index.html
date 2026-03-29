@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+  <title>Timbot Launcher</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      background: #16213e;
+      padding: 16px 24px;
+      border-bottom: 1px solid #0f3460;
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #e94560;
+    }
+    .header p {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+    }
+    .form-section {
+      padding: 24px;
+      flex: 0 0 auto;
+    }
+    .field {
+      margin-bottom: 16px;
+    }
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #aaa;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .field input {
+      width: 100%;
+      padding: 10px 12px;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 14px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus {
+      border-color: #e94560;
+    }
+    .field input::placeholder {
+      color: #555;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .checkbox-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .checkbox-field:hover {
+      border-color: #e94560;
+    }
+    .checkbox-field input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #e94560;
+    }
+    .checkbox-field label {
+      font-size: 13px;
+      color: #aaa;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      margin: 0;
+      display: inline;
+    }
+    button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #start-btn {
+      background: #e94560;
+      color: #fff;
+    }
+    #stop-btn {
+      background: #533483;
+      color: #fff;
+      display: none;
+    }
+    .status {
+      padding: 0 24px;
+      font-size: 12px;
+      color: #888;
+      flex: 0 0 auto;
+    }
+    .status .running { color: #4ecca3; }
+    .status .stopped { color: #e94560; }
+    .log-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 24px 24px;
+      min-height: 0;
+    }
+    .log-section h3 {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    #log-output {
+      flex: 1;
+      background: #0f0f1a;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      padding: 12px;
+      overflow-y: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #8f8f8f;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Timbot</h1>
+    <p>Translator in the Middle — Telegram Bot</p>
+  </div>
+
+  <div class="form-section">
+    <div id="inputs-container">
+      <div class="field">
+        <label for="bot-token">BOT_TOKEN</label>
+        <input type="text" id="bot-token" placeholder="your_telegram_bot_token_here" spellcheck="false" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="openai-key">OPENAI_API_KEY</label>
+        <input type="text" id="openai-key" placeholder="your_openai_api_key_here" spellcheck="false" autocomplete="off">
+      </div>
+      <div class="buttons">
+        <button id="cancel-btn" style="background: #0f3460; color: #aaa;">Cancel</button>
+      </div>
+    </div>
+    <div id="configured-message" style="display: none; margin-bottom: 16px;">
+      <p style="color: #4ecca3; font-size: 13px; margin-bottom: 12px;">✅ API keys are configured and saved.</p>
+      <button id="change-keys-btn" style="background: #0f3460; color: #aaa; padding: 8px 16px; font-size: 12px;">Change Keys</button>
+      <div class="checkbox-field" id="autostart-wrapper">
+        <input type="checkbox" id="autostart-checkbox">
+        <label for="autostart-checkbox">Launch with Windows</label>
+      </div>
+    </div>
+    <div class="buttons">
+      <button id="start-btn">Start Bot</button>
+      <button id="stop-btn">Stop Bot</button>
+    </div>
+  </div>
+
+  <div class="status">
+    <span id="status-text" class="stopped">Stopped</span>
+  </div>
+
+  <div class="log-section">
+    <h3>Output</h3>
+    <div id="log-output"></div>
+  </div>
+
+  <script>
+    console.log('Script loaded');
+    const botTokenInput = document.getElementById('bot-token');
+    const openaiKeyInput = document.getElementById('openai-key');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const statusText = document.getElementById('status-text');
+    const logOutput = document.getElementById('log-output');
+    const inputsContainer = document.getElementById('inputs-container');
+    const configuredMessage = document.getElementById('configured-message');
+    const changeKeysBtn = document.getElementById('change-keys-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const autostartCheckbox = document.getElementById('autostart-checkbox');
+
+    console.log('Elements found:', { botTokenInput, openaiKeyInput, startBtn, stopBtn, statusText, logOutput });
+    console.log('window.timbot:', window.timbot);
+
+    let savedEnv = {};
+
+    function appendLog(text) {
+      logOutput.textContent += text;
+      logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    function setRunning(running) {
+      if (running) {
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'inline-block';
+        botTokenInput.disabled = true;
+        openaiKeyInput.disabled = true;
+        statusText.textContent = 'Running';
+        statusText.className = 'running';
+      } else {
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+        botTokenInput.disabled = false;
+        openaiKeyInput.disabled = false;
+        statusText.textContent = 'Stopped';
+        statusText.className = 'stopped';
+      }
+    }
+
+    window.timbot.onBotOutput((data) => {
+      appendLog(data);
+    });
+
+    window.timbot.onBotExited((code) => {
+      setRunning(false);
+      appendLog(`\nBot exited with code ${code}\n`);
+    });
+
+    window.timbot.getEnv().then((env) => {
+      savedEnv = env;
+      if (env.BOT_TOKEN && env.OPENAI_API_KEY) {
+        inputsContainer.style.display = 'none';
+        configuredMessage.style.display = 'block';
+        
+        // Load autostart setting
+        window.timbot.getAutoStart().then((enabled) => {
+          autostartCheckbox.checked = enabled;
+        });
+        
+        // Auto-start bot and minimize
+        setTimeout(async () => {
+          logOutput.textContent = '';
+          appendLog('Starting bot...\n');
+          const result = await window.timbot.startBot({
+            BOT_TOKEN: env.BOT_TOKEN,
+            OPENAI_API_KEY: env.OPENAI_API_KEY,
+          });
+          if (!result.error) {
+            setRunning(true);
+            window.timbot.minimize();
+          }
+        }, 500);
+      }
+    });
+
+    changeKeysBtn.addEventListener('click', () => {
+      inputsContainer.style.display = 'block';
+      configuredMessage.style.display = 'none';
+      botTokenInput.value = '';
+      openaiKeyInput.value = '';
+      botTokenInput.focus();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      inputsContainer.style.display = 'none';
+      configuredMessage.style.display = 'block';
+      botTokenInput.value = '';
+      openaiKeyInput.value = '';
+    });
+
+    // Handle autostart checkbox changes
+    autostartCheckbox.addEventListener('change', async () => {
+      const result = await window.timbot.setAutoStart(autostartCheckbox.checked);
+      if (result.error) {
+        appendLog(`Failed to update autostart: ${result.error}\n`);
+        // Revert checkbox on error
+        autostartCheckbox.checked = !autostartCheckbox.checked;
+      }
+    });
+
+    startBtn.addEventListener('click', async () => {
+      console.log('Start button clicked');
+      const botToken = botTokenInput.value.trim() || savedEnv.BOT_TOKEN || '';
+      const openaiKey = openaiKeyInput.value.trim() || savedEnv.OPENAI_API_KEY || '';
+
+      if (!botToken) {
+        appendLog('BOT_TOKEN is required\n');
+        return;
+      }
+      if (!openaiKey) {
+        appendLog('OPENAI_API_KEY is required\n');
+        return;
+      }
+
+      logOutput.textContent = '';
+      appendLog('Starting bot...\n');
+
+      const result = await window.timbot.startBot({
+        BOT_TOKEN: botToken,
+        OPENAI_API_KEY: openaiKey,
+      });
+
+      if (result.error) {
+        appendLog(`${result.error}\n`);
+      } else {
+        setRunning(true);
+      }
+    });
+
+    stopBtn.addEventListener('click', async () => {
+      appendLog('Stopping bot...\n');
+      await window.timbot.stopBot();
+    });
+  </script>
+</body>
+</html>

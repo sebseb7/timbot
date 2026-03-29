@@ -6,14 +6,14 @@ import { createLanguageKeyboard } from '../keyboards.js';
 
 export function createStartHandler() {
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+    const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 
     const payload = ctx.payload;
     if (payload && payload.startsWith('join_')) {
       const code = payload.slice(5).toUpperCase();
 
-      const result = joinConversation(code, ctx.from.id);
+      const result = await joinConversation(code, ctx.from.id);
 
       if (result.error) {
         let errorKey;
@@ -27,7 +27,7 @@ export function createStartHandler() {
         return;
       }
 
-      const partner = getConversationPartnerInfo(code, ctx.from.id);
+      const partner = await getConversationPartnerInfo(code, ctx.from.id);
 
       let partnerInfo = '';
       if (partner) {
@@ -43,7 +43,7 @@ export function createStartHandler() {
 
       try {
         const creatorId = result.conversation.creator_id;
-        const pLang = getUserLanguage(creatorId);
+        const pLang = await getUserLanguage(creatorId);
         const joinedUsername = ctx.from.username || ctx.from.first_name || `User ${ctx.from.id}`;
         const joinedUserLang = SUPPORTED_LANGUAGES[lang]?.native || lang;
 

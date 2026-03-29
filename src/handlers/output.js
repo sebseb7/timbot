@@ -5,7 +5,7 @@ import { translateGUI } from '../translations.js';
 
 export function createOutputHandler() {
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+    const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
     const currentOutput = user.output || 'text';
 
@@ -28,10 +28,10 @@ export function createOutputActionHandler() {
       return;
     }
 
-    getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
-    setUserOutput(ctx.from.id, outputMode);
+    await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+    await setUserOutput(ctx.from.id, outputMode);
 
-    const lang = getUserLanguage(ctx.from.id);
+    const lang = await getUserLanguage(ctx.from.id);
 
     await ctx.editMessageText(
       `✅ ${translateGUI('output_set', lang)}: ${outputMode}`,

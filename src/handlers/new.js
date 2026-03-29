@@ -5,10 +5,10 @@ import { SUPPORTED_LANGUAGES, COMMANDS } from '../config.js';
 
 export function createNewHandler() {
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+    const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 
-    const code = createConversation(ctx.from.id);
+    const code = await createConversation(ctx.from.id);
     const qrUrl = `http://t.me/${ctx.botInfo.username}?start=join_${code}`;
     const qrBuffer = await QRCode.toBuffer(qrUrl, { width: 400 });
 
@@ -22,7 +22,7 @@ export function createNewHandler() {
       }
     );
 
-    const activeConversations = getActiveConversations(ctx.from.id);
+    const activeConversations = await getActiveConversations(ctx.from.id);
     if (activeConversations.length > 0) {
       const otherConvs = activeConversations.filter(c => c.id !== code);
       if (otherConvs.length > 0) {
@@ -30,7 +30,7 @@ export function createNewHandler() {
         const withUser = translateGUI('with_user', lang);
         let listText = `📋 ${otherActiveConvs}:\n`;
         for (const conv of otherConvs) {
-          const partner = getConversationPartnerInfo(conv.id, ctx.from.id);
+          const partner = await getConversationPartnerInfo(conv.id, ctx.from.id);
           const partnerName = partner?.username || `User ${partner?.user_id || 'Unknown'}`;
           listText += `• <code>${conv.id}</code> ${withUser} ${partnerName}\n`;
         }

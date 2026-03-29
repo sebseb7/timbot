@@ -18,9 +18,9 @@ export function createSendActionHandler(openai) {
     const { text: messageText, audioData, voiceBase64 } = messageData;
 
     const userId = ctx.from.id;
-    const lang = getUserLanguage(userId);
-    const partnerLang = getUserLanguage(partnerId);
-    const partnerOutput = getUserOutput(partnerId);
+    const lang = await getUserLanguage(userId);
+    const partnerLang = await getUserLanguage(partnerId);
+    const partnerOutput = await getUserOutput(partnerId);
 
     try {
       const partner = await ctx.telegram.getChat(partnerId);

@@ -6,7 +6,7 @@ import { createLanguageKeyboard } from '../keyboards.js';
 
 export function createLangHandler() {
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+    const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 
     await ctx.reply(
@@ -21,12 +21,12 @@ export function createLangActionHandler() {
     const langCode = ctx.match[1];
 
     if (!SUPPORTED_LANGUAGES[langCode]) {
-      await ctx.answerCbQuery(translateGUI('invalid_language', getUserLanguage(ctx.from.id)));
+      await ctx.answerCbQuery(translateGUI('invalid_language', await getUserLanguage(ctx.from.id)));
       return;
     }
 
-    getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
-    setUserLanguage(ctx.from.id, langCode);
+    await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+    await setUserLanguage(ctx.from.id, langCode);
 
     await ctx.editMessageText(
       `✅ ${translateGUI('language_set', langCode)}: ${SUPPORTED_LANGUAGES[langCode].native}`,
@@ -36,7 +36,7 @@ export function createLangActionHandler() {
     await ctx.answerCbQuery(translateGUI('language_updated', langCode));
 
     // Send welcome message if user is not in a conversation (first-time setup)
-    const activeConvs = getActiveConversations(ctx.from.id);
+    const activeConvs = await getActiveConversations(ctx.from.id);
     if (activeConvs.length === 0) {
       await ctx.reply(
         `${translateGUI('welcome', langCode)}\n\n` +

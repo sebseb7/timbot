@@ -22,14 +22,6 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // Set bot commands
 bot.telegram.setMyCommands(BOT_COMMANDS);
 
-// Logging middleware
-bot.use((ctx, next) => {
-  if (ctx.message?.text) {
-    console.log(`[${new Date().toISOString()}] ${ctx.from?.username || ctx.from?.id} (lang: ${ctx.from?.language_code || 'unknown'}): ${ctx.message.text.slice(0, 100)}${ctx.message.text.length > 100 ? '...' : ''}`);
-  }
-  return next();
-});
-
 // Command handlers
 bot.start(createStartHandler());
 bot.command(COMMANDS.NEW.name, createNewHandler());

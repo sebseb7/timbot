@@ -35,15 +35,16 @@ export function createLanguageKeyboard() {
   return rows;
 }
 
-export function createPartnerSelectionKeyboard(userId, messageText, audioData = null, voiceBase64 = null) {
-  const conversations = getUserConversations(userId).filter(c => c.participant_id !== null);
+export async function createPartnerSelectionKeyboard(userId, messageText, audioData = null, voiceBase64 = null) {
+  const conversations = await getUserConversations(userId);
+  const activeConversations = conversations.filter(c => c.participant_id !== null);
   const buttons = [];
   const messageId = storeMessage(messageText, audioData, voiceBase64);
 
-  for (const conv of conversations) {
-    const partner = getConversationPartnerInfo(conv.id, userId);
+  for (const conv of activeConversations) {
+    const partner = await getConversationPartnerInfo(conv.id, userId);
     if (!partner) continue;
-    const partnerLang = getUserLanguage(partner.user_id);
+    const partnerLang = await getUserLanguage(partner.user_id);
     const flag = SUPPORTED_LANGUAGES[partnerLang]?.flag || '';
     const displayName = partner.username || `User ${partner.user_id}`;
     buttons.push(Markup.button.callback(
@@ -60,12 +61,13 @@ export function createPartnerSelectionKeyboard(userId, messageText, audioData = 
   return rows;
 }
 
-export function createLeaveConversationKeyboard(userId) {
-  const conversations = getUserConversations(userId).filter(c => c.participant_id !== null);
+export async function createLeaveConversationKeyboard(userId) {
+  const conversations = await getUserConversations(userId);
+  const activeConversations = conversations.filter(c => c.participant_id !== null);
   const buttons = [];
 
-  for (const conv of conversations) {
-    const partner = getConversationPartnerInfo(conv.id, userId);
+  for (const conv of activeConversations) {
+    const partner = await getConversationPartnerInfo(conv.id, userId);
     const partnerName = partner ? (partner.username || `User ${partner.user_id}`) : 'Unknown';
     const label = `Chat with ${partnerName}`;
     buttons.push(Markup.button.callback(label, `leave:${conv.id}`));

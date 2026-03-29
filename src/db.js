@@ -1,74 +1,102 @@
-import Database from 'better-sqlite3';
+import sqlite3 from 'sqlite3';
 import { randomBytes } from 'crypto';
 import { mkdirSync } from 'fs';
 
 mkdirSync('./data', { recursive: true });
-const db = new Database('./data/bot.db');
+const db = new sqlite3.Database('./data/bot.db');
+
+// Enable foreign keys
+db.run('PRAGMA foreign_keys = ON');
+
+// Promisify database operations
+const dbRun = (sql, params = []) => 
+  new Promise((resolve, reject) => {
+    db.run(sql, params, function(err) {
+      if (err) reject(err);
+      else resolve(this);
+    });
+  });
+
+const dbGet = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+
+const dbAll = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
 
 // Create tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY,
-    username TEXT,
-    language TEXT DEFAULT 'en',
-    output TEXT DEFAULT 'text'
-  );
-`);
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      user_id INTEGER PRIMARY KEY,
+      username TEXT,
+      language TEXT DEFAULT 'en',
+      output TEXT DEFAULT 'text'
+    )
+  `);
+  
+  db.run(`
+    CREATE TABLE IF NOT EXISTS conversations (
+      id TEXT PRIMARY KEY,
+      creator_id INTEGER,
+      participant_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+});
 
-export function getOrCreateUser(userId, username, languageCode = 'en', firstName = null) {
-  const stmt = db.prepare('SELECT * FROM users WHERE user_id = ?');
-  let user = stmt.get(userId);
+export async function getOrCreateUser(userId, username, languageCode = 'en', firstName = null) {
+  let user = await dbGet('SELECT * FROM users WHERE user_id = ?', [userId]);
 
   if (!user) {
-    // Store username if available, otherwise store first_name as display name
     const name = username || firstName || null;
-    const insert = db.prepare('INSERT INTO users (user_id, username, language, output) VALUES (?, ?, ?, ?)');
-    insert.run(userId, name, languageCode, 'text');
+    await dbRun('INSERT INTO users (user_id, username, language, output) VALUES (?, ?, ?, ?)', 
+      [userId, name, languageCode, 'text']);
     user = { user_id: userId, username: name, language: languageCode, output: 'text' };
   } else if (!user.username && (username || firstName)) {
-    // Backfill name for existing users
     const name = username || firstName;
-    db.prepare('UPDATE users SET username = ? WHERE user_id = ?').run(name, userId);
+    await dbRun('UPDATE users SET username = ? WHERE user_id = ?', [name, userId]);
     user.username = name;
   }
 
   return user;
 }
 
-export function setUserLanguage(userId, language) {
-  const stmt = db.prepare('UPDATE users SET language = ? WHERE user_id = ?');
-  stmt.run(language, userId);
+export async function setUserLanguage(userId, language) {
+  await dbRun('UPDATE users SET language = ? WHERE user_id = ?', [language, userId]);
 }
 
-export function getUserLanguage(userId) {
-  const stmt = db.prepare('SELECT language FROM users WHERE user_id = ?');
-  const row = stmt.get(userId);
+export async function getUserLanguage(userId) {
+  const row = await dbGet('SELECT language FROM users WHERE user_id = ?', [userId]);
   return row ? row.language : 'en';
 }
 
-export function setUserOutput(userId, output) {
-  const stmt = db.prepare('UPDATE users SET output = ? WHERE user_id = ?');
-  stmt.run(output, userId);
+export async function setUserOutput(userId, output) {
+  await dbRun('UPDATE users SET output = ? WHERE user_id = ?', [output, userId]);
 }
 
-export function getUserOutput(userId) {
-  const stmt = db.prepare('SELECT output FROM users WHERE user_id = ?');
-  const row = stmt.get(userId);
+export async function getUserOutput(userId) {
+  const row = await dbGet('SELECT output FROM users WHERE user_id = ?', [userId]);
   return row ? row.output : 'text';
 }
 
-export function createConversation(creatorId) {
+export async function createConversation(creatorId) {
   const code = randomBytes(4).toString('hex').toUpperCase();
-  const insertStmt = db.prepare(`
-    INSERT INTO conversations (id, creator_id) VALUES (?, ?)
-  `);
-  insertStmt.run(code, creatorId);
+  await dbRun('INSERT INTO conversations (id, creator_id) VALUES (?, ?)', [code, creatorId]);
   return code;
 }
 
-export function joinConversation(code, participantId) {
-  const convStmt = db.prepare('SELECT * FROM conversations WHERE id = ?');
-  const conversation = convStmt.get(code);
+export async function joinConversation(code, participantId) {
+  const conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [code]);
 
   if (!conversation) {
     return { error: 'Conversation not found' };
@@ -86,17 +114,13 @@ export function joinConversation(code, participantId) {
     return { error: 'Conversation is full' };
   }
 
-  const updateStmt = db.prepare(`
-    UPDATE conversations SET participant_id = ? WHERE id = ?
-  `);
-  updateStmt.run(participantId, code);
+  await dbRun('UPDATE conversations SET participant_id = ? WHERE id = ?', [participantId, code]);
 
   return { success: true, conversation: { ...conversation, participant_id: participantId } };
 }
 
-export function leaveConversation(userId, conversationId) {
-  const convStmt = db.prepare('SELECT * FROM conversations WHERE id = ?');
-  const conversation = convStmt.get(conversationId);
+export async function leaveConversation(userId, conversationId) {
+  const conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [conversationId]);
 
   if (!conversation) {
     return { error: 'Conversation not found' };
@@ -106,37 +130,33 @@ export function leaveConversation(userId, conversationId) {
     return { error: 'Not in this conversation' };
   }
 
-  const deleteStmt = db.prepare('DELETE FROM conversations WHERE id = ?');
-  deleteStmt.run(conversationId);
+  await dbRun('DELETE FROM conversations WHERE id = ?', [conversationId]);
 
   const otherUserId = conversation.creator_id === userId ? conversation.participant_id : conversation.creator_id;
 
   return { success: true, conversationId, otherUserId };
 }
 
-export function getUserConversations(userId) {
-  const stmt = db.prepare(`
+export async function getUserConversations(userId) {
+  return await dbAll(`
     SELECT * FROM conversations 
     WHERE creator_id = ? OR participant_id = ?
-  `);
-  return stmt.all(userId, userId);
+  `, [userId, userId]);
 }
 
-export function getActiveConversations(userId) {
-  const stmt = db.prepare(`
+export async function getActiveConversations(userId) {
+  return await dbAll(`
     SELECT * FROM conversations 
     WHERE (creator_id = ? OR participant_id = ?) AND participant_id IS NOT NULL
-  `);
-  return stmt.all(userId, userId);
+  `, [userId, userId]);
 }
 
-export function getConversationPartnerInfo(conversationId, userId) {
-  const stmt = db.prepare(`
+export async function getConversationPartnerInfo(conversationId, userId) {
+  return await dbGet(`
     SELECT u.user_id, u.username, u.language FROM users u
     JOIN conversations c ON (u.user_id = c.creator_id OR u.user_id = c.participant_id)
     WHERE c.id = ? AND u.user_id != ?
-  `);
-  return stmt.get(conversationId, userId);
+  `, [conversationId, userId]);
 }
 
 export default db;
