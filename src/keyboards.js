@@ -45,7 +45,7 @@ export function createPartnerSelectionKeyboard(userId, messageText, audioData = 
     if (!partner) continue;
     const partnerLang = getUserLanguage(partner.user_id);
     const flag = SUPPORTED_LANGUAGES[partnerLang]?.flag || '';
-    const displayName = partner.username ? `@${partner.username}` : `User ${partner.user_id}`;
+    const displayName = partner.username || `User ${partner.user_id}`;
     buttons.push(Markup.button.callback(
       `${flag} ${displayName}`,
       `send:${conv.id}:${partner.user_id}:${messageId}`
@@ -66,7 +66,7 @@ export function createLeaveConversationKeyboard(userId) {
 
   for (const conv of conversations) {
     const partner = getConversationPartnerInfo(conv.id, userId);
-    const partnerName = partner ? (partner.username ? `@${partner.username}` : `User ${partner.user_id}`) : 'Unknown';
+    const partnerName = partner ? (partner.username || `User ${partner.user_id}`) : 'Unknown';
     const label = `Chat with ${partnerName}`;
     buttons.push(Markup.button.callback(label, `leave:${conv.id}`));
   }

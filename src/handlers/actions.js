@@ -2,7 +2,7 @@ import { Input } from 'telegraf';
 import { getUserLanguage, getUserOutput } from '../db.js';
 import { translateGUI, translate } from '../translations.js';
 import { retrieveMessage } from '../keyboards.js';
-import { handleVoiceAudioSend } from './messages.js';
+import { handleVoiceAudioSend, handleTextToAudioSend } from './messages.js';
 
 export function createSendActionHandler(openai) {
   return async (ctx) => {
@@ -17,13 +17,6 @@ export function createSendActionHandler(openai) {
 
     const { text: messageText, audioData, voiceBase64 } = messageData;
 
-    // If voiceBase64 is present, this is an audio mode voice message
-    // Translation happens now after partner selection (we know target language)
-    if (voiceBase64) {
-      await handleVoiceAudioSend(ctx, partnerId, voiceBase64, openai);
-      return;
-    }
-
     const userId = ctx.from.id;
     const lang = getUserLanguage(userId);
     const partnerLang = getUserLanguage(partnerId);
@@ -34,7 +27,13 @@ export function createSendActionHandler(openai) {
       const partnerName = partner.username ? `@${partner.username}` : partner.first_name;
       const senderName = ctx.from.username ? `@${ctx.from.username}` : (ctx.from.first_name || `User ${ctx.from.id}`);
 
-      // If partner has audio output mode and we have audio data, send voice message
+      // If receiver wants audio and we have voice data, deliver as audio
+      if (partnerOutput === 'audio' && voiceBase64) {
+        await handleVoiceAudioSend(ctx, partnerId, voiceBase64, openai);
+        return;
+      }
+
+      // If receiver wants audio and we have pre-recorded audio data, send voice message
       if (partnerOutput === 'audio' && audioData) {
         await ctx.telegram.sendVoice(partnerId, Input.fromBuffer(Buffer.from(audioData, 'base64'), 'voice.ogg'), {
           caption: `${senderName}:`
@@ -44,6 +43,9 @@ export function createSendActionHandler(openai) {
           `🎤 ✅ ${translateGUI('sent_to', lang)} ${partnerName}\n\n> ${messageText.replace(/\n/g, '\n> ')}`,
           { parse_mode: 'HTML' }
         );
+      } else if (partnerOutput === 'audio' && messageText) {
+        // Receiver wants audio: translate text and generate audio
+        await handleTextToAudioSend(ctx, partnerId, messageText, openai);
       } else {
         // Text mode: translate and send text message
         const translatedText = await translate(messageText, partnerLang, openai);

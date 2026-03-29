@@ -4,7 +4,7 @@ import { SUPPORTED_LANGUAGES, COMMANDS } from '../config.js';
 
 export function createJoinHandler() {
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code);
+    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
     const code = ctx.message.text.split(' ')[1]?.trim().toUpperCase();
 
@@ -34,7 +34,7 @@ export function createJoinHandler() {
     let partnerInfo = '';
     if (partner) {
       const pLang = SUPPORTED_LANGUAGES[partner.language]?.native || partner.language;
-      const partnerName = partner.username ? `@${partner.username}` : `User ${partner.user_id}`;
+      const partnerName = partner.username || `User ${partner.user_id}`;
       partnerInfo = `\n\n${translateGUI('your_partner', lang)}: ${partnerName} (${pLang})`;
     }
 
@@ -45,7 +45,7 @@ export function createJoinHandler() {
 
     try {
       const creatorId = result.conversation.creator_id;
-      const joinedUsername = ctx.from.username ? `@${ctx.from.username}` : `User ${ctx.from.id}`;
+      const joinedUsername = ctx.from.username || ctx.from.first_name || `User ${ctx.from.id}`;
       const joinedUserLang = SUPPORTED_LANGUAGES[lang]?.native || lang;
       const pLang = getUserLanguage(creatorId);
 

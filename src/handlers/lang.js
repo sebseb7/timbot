@@ -6,7 +6,7 @@ import { createLanguageKeyboard } from '../keyboards.js';
 
 export function createLangHandler() {
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code);
+    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 
     await ctx.reply(
@@ -25,7 +25,7 @@ export function createLangActionHandler() {
       return;
     }
 
-    getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code);
+    getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     setUserLanguage(ctx.from.id, langCode);
 
     await ctx.editMessageText(

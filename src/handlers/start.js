@@ -6,7 +6,7 @@ import { createLanguageKeyboard } from '../keyboards.js';
 
 export function createStartHandler() {
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code);
+    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 
     const payload = ctx.payload;
@@ -32,7 +32,7 @@ export function createStartHandler() {
       let partnerInfo = '';
       if (partner) {
         const pLang = SUPPORTED_LANGUAGES[partner.language]?.native || partner.language;
-        const partnerName = partner.username ? `@${partner.username}` : `User ${partner.user_id}`;
+        const partnerName = partner.username || `User ${partner.user_id}`;
         partnerInfo = `\n\n${translateGUI('your_partner', lang)}: ${partnerName} (${pLang})`;
       }
 
@@ -44,7 +44,7 @@ export function createStartHandler() {
       try {
         const creatorId = result.conversation.creator_id;
         const pLang = getUserLanguage(creatorId);
-        const joinedUsername = ctx.from.username ? `@${ctx.from.username}` : `User ${ctx.from.id}`;
+        const joinedUsername = ctx.from.username || ctx.from.first_name || `User ${ctx.from.id}`;
         const joinedUserLang = SUPPORTED_LANGUAGES[lang]?.native || lang;
 
         await ctx.telegram.sendMessage(

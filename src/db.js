@@ -13,27 +13,23 @@ db.exec(`
     language TEXT DEFAULT 'en',
     output TEXT DEFAULT 'text'
   );
-
-  CREATE TABLE IF NOT EXISTS conversations (
-    id TEXT PRIMARY KEY,
-    creator_id INTEGER NOT NULL,
-    participant_id INTEGER,
-    FOREIGN KEY (creator_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (participant_id) REFERENCES users(user_id) ON DELETE CASCADE
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_conversations_creator ON conversations(creator_id);
-  CREATE INDEX IF NOT EXISTS idx_conversations_participant ON conversations(participant_id);
 `);
 
-export function getOrCreateUser(userId, username, languageCode = 'en') {
+export function getOrCreateUser(userId, username, languageCode = 'en', firstName = null) {
   const stmt = db.prepare('SELECT * FROM users WHERE user_id = ?');
   let user = stmt.get(userId);
 
   if (!user) {
+    // Store username if available, otherwise store first_name as display name
+    const name = username || firstName || null;
     const insert = db.prepare('INSERT INTO users (user_id, username, language, output) VALUES (?, ?, ?, ?)');
-    insert.run(userId, username, languageCode, 'text');
-    user = { user_id: userId, username, language: languageCode, output: 'text' };
+    insert.run(userId, name, languageCode, 'text');
+    user = { user_id: userId, username: name, language: languageCode, output: 'text' };
+  } else if (!user.username && (username || firstName)) {
+    // Backfill name for existing users
+    const name = username || firstName;
+    db.prepare('UPDATE users SET username = ? WHERE user_id = ?').run(name, userId);
+    user.username = name;
   }
 
   return user;

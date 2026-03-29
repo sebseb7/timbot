@@ -5,7 +5,7 @@ import { Markup } from 'telegraf';
 
 export function createLeaveHandler() {
   return async (ctx) => {
-    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code);
+    const user = getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 
     const conversations = getUserConversations(ctx.from.id);
@@ -35,7 +35,7 @@ export function createLeaveHandler() {
       if (partner) {
         try {
           const pLang = getUserLanguage(partner.user_id);
-          const leftUsername = ctx.from.username ? `@${ctx.from.username}` : `User ${ctx.from.id}`;
+          const leftUsername = ctx.from.username || ctx.from.first_name || `User ${ctx.from.id}`;
           await ctx.telegram.sendMessage(partner.user_id, `⚠️ ${leftUsername} ${translateGUI('user_left_conv', pLang)}`);
         } catch (error) {
           console.error('Failed to notify partner:', error);
@@ -69,8 +69,8 @@ export function createLeaveActionHandler() {
     if (partner) {
       try {
         const pLang = getUserLanguage(partner.user_id);
-        const userInfo = getOrCreateUser(userId, ctx.from.username, ctx.from.language_code);
-        const leftUsername = userInfo?.username ? `@${userInfo.username}` : `User ${userId}`;
+        const userInfo = getOrCreateUser(userId, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
+        const leftUsername = userInfo?.username || `User ${userId}`;
         await ctx.telegram.sendMessage(partner.user_id, `⚠️ ${leftUsername} ${translateGUI('user_left_conv', pLang)}`);
       } catch (error) {
         console.error('Failed to notify partner:', error);

@@ -99,6 +99,49 @@ export async function transcribeVoice(buffer, openai) {
   return transcription.text ?? '';
 }
 
+// Text-to-audio: Translate text and generate audio using gpt-audio-1.5
+export async function translateTextToAudio(text, targetLang, openai) {
+  const targetLangName = SUPPORTED_LANGUAGES[targetLang]?.name || targetLang;
+
+  const startAudio = performance.now();
+  const response = await openai.chat.completions.create({
+    model: "gpt-audio-1.5",
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: `Translate to ${targetLangName} : "${text}" Just Answer with the translation.` }
+        ]
+      }
+    ],
+    modalities: ["text", "audio"],
+    audio: {
+      "voice": "alloy",
+      "format": "opus"
+    },
+  });
+  const audioTime = performance.now() - startAudio;
+
+  const transcript = response.choices[0].message.audio.transcript;
+  const opusData = response.choices[0].message.audio.data;
+
+  // Wrap opus data in OGG container for Telegram
+  const tempDir = mkdtempSync(join(tmpdir(), 'audio-'));
+  const oggPath = join(tempDir, 'output.ogg');
+
+  try {
+    await convertOpusToOgg(opusData, oggPath);
+    const oggBuffer = readFileSync(oggPath);
+    const audioData = oggBuffer.toString('base64');
+
+    console.log('text-to-audio transcript:', transcript, '\ngpt-audio-1.5_time:', audioTime.toFixed(0) + 'ms');
+
+    return { text: transcript, audioData };
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
 // Audio mode: Use gpt-audio-1.5 for direct audio translation (called after partner selection)
 export async function translateVoiceToAudio(base64str, targetLang, openai) {
   const targetLangName = SUPPORTED_LANGUAGES[targetLang]?.name || targetLang;

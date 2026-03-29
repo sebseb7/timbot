@@ -11,8 +11,8 @@ export default {
   "language_set": "Language set to", // src/handlers/lang.js:35
   "language_updated": "Language updated!", // src/handlers/lang.js:36
   "invalid_language": "Invalid language", // src/handlers/lang.js:27
-  "conv_created": "Conversation created!\n\nShare this code with someone:", // src/handlers/new.js:12
-  "join_code": "They should use", // src/handlers/new.js:13
+  "conv_created": "Conversation created!", // src/handlers/new.js:12
+  "join_code": "The other party need to join using", // src/handlers/new.js:13
   "or_share_link": "or share this link", // src/handlers/new.js:14
   "waiting_partner": "Waiting for someone to join your conversation...", // src/handlers/new.js:16, src/handlers/messages.js:33
   "other_active_conversations": "Your other active conversations", // src/handlers/new.js:35
@@ -24,7 +24,7 @@ export default {
   "conv_not_found": "Conversation not found", // src/handlers/start.js:20, src/handlers/join.js:22
   "already_joined": "You are already in this conversation", // src/handlers/start.js:21, src/handlers/join.js:23
   "own_conversation": "Cannot join your own conversation", // src/handlers/start.js:22, src/handlers/join.js:24
-  "conv_full": "Conversation is full", // src/handlers/start.js:23, src/handlers/join.js:25
+  "conv_full": "This code was already used", // src/handlers/start.js:23, src/handlers/join.js:25
   "provide_code": "Please provide a conversation code.", // src/handlers/join.js:12
   "example": "Example", // src/handlers/join.js:13
   "transcription": "Transcription",
@@ -41,13 +41,13 @@ export default {
   "failed_send": "Failed to send message to your partner.", // src/handlers/messages.js:73, src/handlers/actions.js:31
   "select_partner": "Select who to send a translation of this message to:", // src/handlers/messages.js:77
   "sent_to": "Sent to", // src/handlers/actions.js:21
-  "cmd_output": "Set your output mode (text or audio)",
-  "current_output": "Your output mode",
-  "select_output": "Select your output mode:",
+  "cmd_output": "Set your message receive mode (text or audio)",
+  "current_output": "Receive message as",
+  "select_output": "Set to:",
   "output_text": "Text",
   "output_audio": "Audio",
-  "output_set": "Output mode set to",
-  "output_updated": "Output mode updated!",
+  "output_set": "Receive mode set to",
+  "output_updated": "Receive mode updated!",
   "original": "Original",
   "translation": "Translation"
 };

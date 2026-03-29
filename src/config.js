@@ -63,7 +63,7 @@ export const COMMANDS = {
   JOIN: { name: 'join', description: 'Join a conversation' },
   LEAVE: { name: 'leave', description: 'Leave a conversation' },
   LANG: { name: 'lang', description: 'Set your language' },
-  OUTPUT: { name: 'output', description: 'Set your output mode (text or audio)' }
+  OUTPUT: { name: 'output', description: 'Setting: Receive messages as audio or text' }
 };
 
 export const MAX_MESSAGE_LENGTH = 500;
