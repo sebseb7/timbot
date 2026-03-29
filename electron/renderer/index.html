@@ -120,6 +120,14 @@
       color: #fff;
       display: none;
     }
+    #minimize-btn {
+      background: #0f3460;
+      color: #aaa;
+    }
+    #minimize-btn:hover {
+      background: #1a4a7a;
+      color: #e0e0e0;
+    }
     .status {
       padding: 0 24px;
       font-size: 12px;
@@ -189,6 +197,7 @@
     <div class="buttons">
       <button id="start-btn">Start Bot</button>
       <button id="stop-btn">Stop Bot</button>
+      <button id="minimize-btn">Minimize to Tray</button>
     </div>
   </div>
 
@@ -207,6 +216,7 @@
     const openaiKeyInput = document.getElementById('openai-key');
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
+    const minimizeBtn = document.getElementById('minimize-btn');
     const statusText = document.getElementById('status-text');
     const logOutput = document.getElementById('log-output');
     const inputsContainer = document.getElementById('inputs-container');
@@ -336,6 +346,10 @@
     stopBtn.addEventListener('click', async () => {
       appendLog('Stopping bot...\n');
       await window.timbot.stopBot();
+    });
+
+    minimizeBtn.addEventListener('click', () => {
+      window.timbot.minimize();
     });
   </script>
 </body>

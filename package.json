@@ -7,13 +7,17 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "electron": "electron . --no-sandbox",
-    "translate": "node scripts/generate-translations.js"
+    "translate": "node scripts/generate-translations.js",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:win:portable": "electron-builder --win portable"
   },
   "author": "",
   "license": "ISC",
   "description": "translator in the middle bot",
   "dependencies": {
     "dotenv": "^17.3.1",
+
     "electron-store": "^11.0.2",
     "openai": "^4.104.0",
     "qrcode": "^1.5.4",
@@ -21,6 +25,47 @@
     "telegraf": "^4.16.3"
   },
   "devDependencies": {
+    "electron-builder": "^26.8.1",
     "electron": "^41.1.0"
+  },
+  "build": {
+    "appId": "com.timbot.app",
+    "productName": "Timbot",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "scripts/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/icon.png"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }
