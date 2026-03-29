@@ -8,6 +8,12 @@ A Telegram bot that enables real-time translation between two users speaking dif
 
 [t.me/tinthem_bot](https://t.me/tinthem_bot)
 
+## Desktop Launcher
+
+[![Download Timbot Setup](electron/launcherScreenshot.jpg)](https://github.com/sebseb7/timbot/releases/download/v1.0.0/Timbot.Setup.1.0.0.exe)
+
+[Download Timbot Setup 1.0.0](https://github.com/sebseb7/timbot/releases/download/v1.0.0/Timbot.Setup.1.0.0.exe)
+
 ## Features
 
 - `/new` - Create a new conversation and get a shareable code
