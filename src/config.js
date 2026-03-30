@@ -80,6 +80,8 @@ export const WHISPER_MODEL_URL = process.env.WHISPER_MODEL_URL;
 
 export const WHISPER_CPP_PATH = process.env.WHISPER_CPP_PATH || 'whisper-cli';
 
+export const FFMPEG_PATH = process.env.FFMPEG_PATH || 'ffmpeg';
+
 /**
  * Check if a model supports reasoning_effort parameter
  * Only GPT-5+ reasoning models support this parameter

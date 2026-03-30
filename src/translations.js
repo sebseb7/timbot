@@ -106,6 +106,22 @@ export async function translate(text, targetLang, openai) {
     requestOptions.reasoning_effort = "none";
   }
 
+  /*
+  const systemPrompt = `You are part of a man in the middle translation system. Translation the input to ${SUPPORTED_LANGUAGES[targetLang]?.name || targetLang}. Only return the translation, nothing else./no_think`;
+  const responseX = await fetch('http://localhost:1235/api/v1/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model:"nvidia-nemotron-nano-9b-v2",
+      system_prompt: systemPrompt,
+      input:text
+    })
+  });
+  const responseJson = await responseX.json();
+  return responseJson.output[0].content;*/
+
   const response = await openai.chat.completions.create(requestOptions);
   return response.choices[0].message.content;
 }

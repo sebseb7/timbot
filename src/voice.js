@@ -4,7 +4,7 @@ import { tmpdir } from 'os';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { toFile } from 'openai';
-import { SUPPORTED_LANGUAGES, USE_LOCAL_WHISPER, WHISPER_MODEL_URL, WHISPER_CPP_PATH } from './config.js';
+import { SUPPORTED_LANGUAGES, USE_LOCAL_WHISPER, WHISPER_MODEL_URL, WHISPER_CPP_PATH, FFMPEG_PATH } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -74,12 +74,12 @@ async function ensureModelDownloaded() {
       throw new Error('Model file was not created');
     }
 
-    // Check GGUF magic number (first 4 bytes should be 'GGUF')
+    // Check for valid model format (GGUF or legacy ggml format)
+    // ggml models use little-endian magic: "lmgg" (reversed "ggml")
     const fd = readFileSync(MODEL_PATH);
     const magic = fd.slice(0, 4).toString('ascii');
-    if (magic !== 'GGUF') {
-      rmSync(MODEL_PATH, { force: true });
-      throw new Error('Downloaded file is not a valid GGUF model (bad magic). Check the WHISPER_MODEL_URL.');
+    if (magic !== 'GGUF' && magic !== 'lmgg') {
+      throw new Error('Downloaded file is not a valid Whisper model (bad magic: ' + magic + '). Check the WHISPER_MODEL_URL.');
     }
 
     return MODEL_PATH;
@@ -104,6 +104,9 @@ async function transcribeWithLocalWhisper(audioPath) {
       '-m', MODEL_PATH,
       '-f', audioPath,
       '-l', 'auto',
+      '-t', '16',
+      '-bo', '1',
+      '-bs', '1',
       '--output-txt',
       '--output-file', audioPath.replace(/\.[^.]+$/, ''),
     ];
@@ -154,7 +157,7 @@ function convertOpusToOgg(opusBase64, outputPath) {
     const opusPath = join(tempDir, 'input.opus');
     writeFileSync(opusPath, Buffer.from(opusBase64, 'base64'));
 
-    const ffmpeg = spawn("ffmpeg", [
+    const ffmpeg = spawn(FFMPEG_PATH, [
       "-y",
       "-i", opusPath,
       "-c:a", "copy",
@@ -177,7 +180,7 @@ function convertOpusToOgg(opusBase64, outputPath) {
 
 function convertOggToWav(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    const ffmpeg = spawn("ffmpeg", [
+    const ffmpeg = spawn(FFMPEG_PATH, [
       "-y",
       "-i", inputPath,
       "-ar", "16000",

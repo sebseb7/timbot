@@ -65,6 +65,7 @@ export function createMessageHandler(openai) {
         try {
           translatedText = await translate(originalText, partnerLang, openai);
         } catch (error) {
+          console.error('Translation error:', error);
           await ctx.reply(`❌ ${translateGUI('translation_failed', lang)}`);
           return;
         }
