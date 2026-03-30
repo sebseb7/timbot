@@ -12,7 +12,7 @@ export function createNewHandler() {
     const qrUrl = `http://t.me/${ctx.botInfo.username}?start=join_${code}`;
     const qrBuffer = await QRCode.toBuffer(qrUrl, { width: 400 });
 
-    const caption = `✅ ${translateGUI('conv_created', lang)}\n\n${translateGUI('join_code', lang)}:\n<code>/${COMMANDS.JOIN.name} ${code}</code>\n\n${translateGUI('or_share_link', lang)}:\n<code>${qrUrl}</code>\n\n${translateGUI('your_language', lang)}: ${SUPPORTED_LANGUAGES[lang]?.native || lang}\n\n⏳ ${translateGUI('waiting_partner', lang)}`;
+    const caption = `✅ ${translateGUI('conv_created', lang)}\n\n${translateGUI('join_code', lang)}\n<code>/${COMMANDS.JOIN.name} ${code}</code>\n\n${translateGUI('or_share_link', lang)}\n<code>${qrUrl}</code>\n\n${translateGUI('your_language', lang)}: ${SUPPORTED_LANGUAGES[lang]?.native || lang}\n\n⏳ ${translateGUI('waiting_partner', lang)}`;
 
     await ctx.replyWithPhoto(
       { source: qrBuffer },

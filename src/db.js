@@ -59,12 +59,12 @@ export async function getOrCreateUser(userId, username, languageCode = 'en', fir
   let user = await dbGet('SELECT * FROM users WHERE user_id = ?', [userId]);
 
   if (!user) {
-    const name = username || firstName || null;
-    await dbRun('INSERT INTO users (user_id, username, language, output) VALUES (?, ?, ?, ?)', 
+    const name = username ? `@${username}` : (firstName || null);
+    await dbRun('INSERT INTO users (user_id, username, language, output) VALUES (?, ?, ?, ?)',
       [userId, name, languageCode, 'text']);
     user = { user_id: userId, username: name, language: languageCode, output: 'text' };
   } else if (!user.username && (username || firstName)) {
-    const name = username || firstName;
+    const name = username ? `@${username}` : firstName;
     await dbRun('UPDATE users SET username = ? WHERE user_id = ?', [name, userId]);
     user.username = name;
   }
