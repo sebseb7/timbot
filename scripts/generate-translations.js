@@ -46,7 +46,8 @@ async function translateAllForLanguage(targetLang) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-4.1-mini',
+        model: 'gpt-5.4',
+        reasoning_effort: "none",
         messages,
         response_format: { type: 'json_object' }
       });
