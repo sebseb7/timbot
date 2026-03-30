@@ -152,7 +152,6 @@ export async function handleVoiceAudioSend(ctx, partnerId, voiceBase64, openai) 
     const replyText = `🎤 ✅ ${translateGUI('sent_to', lang)} ${partnerName}\n\n> ${result.text.replace(/\n/g, '\n> ')}`;
     if (isCallback) {
       await ctx.editMessageText(replyText, { parse_mode: 'HTML' });
-      await ctx.answerCbQuery(`${translateGUI('message_delivered', lang)} ${partnerName}`);
     } else {
       await ctx.reply(replyText, { parse_mode: 'HTML' });
     }
@@ -189,7 +188,6 @@ export async function handleTextToAudioSend(ctx, partnerId, text, openai) {
     const replyText = `🎤 ✅ ${translateGUI('sent_to', lang)} ${partnerName}\n\n> ${result.text.replace(/\n/g, '\n> ')}`;
     if (isCallback) {
       await ctx.editMessageText(replyText, { parse_mode: 'HTML' });
-      await ctx.answerCbQuery(`${translateGUI('message_delivered', lang)} ${partnerName}`);
     } else {
       await ctx.reply(replyText, { parse_mode: 'HTML' });
     }
