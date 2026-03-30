@@ -2,11 +2,16 @@ import { Markup, Input } from 'telegraf';
 import { getOrCreateUser, getUserLanguage, getUserConversations, getConversationPartnerInfo, getUserOutput } from '../db.js';
 import { translateGUI, translate } from '../translations.js';
 import { createPartnerSelectionKeyboard } from '../keyboards.js';
-import { MAX_MESSAGE_LENGTH } from '../config.js';
+import { MAX_MESSAGE_LENGTH, DISABLE_RECEIVE_AUDIO } from '../config.js';
 import { prepareVoiceData, transcribeVoice, translateVoiceToAudio, translateTextToAudio } from '../voice.js';
 
 export function createMessageHandler(openai) {
   return async (ctx, originalText, isVoice = false, forceSelection = false, voiceBase64 = null) => {
+    // Ignore /output command when DISABLE_RECEIVE_AUDIO is true
+    if (DISABLE_RECEIVE_AUDIO && originalText === '/output') {
+      return;
+    }
+
     const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 

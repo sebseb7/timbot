@@ -1,12 +1,13 @@
-import 'dotenv/config';
 import { Telegraf } from 'telegraf';
 import OpenAI from 'openai';
-import { COMMANDS } from './config.js';
+import { COMMANDS, DISABLE_RECEIVE_AUDIO } from './config.js';
 
-const BOT_COMMANDS = Object.values(COMMANDS).map(c => ({
-  command: c.name,
-  description: c.description
-}));
+const BOT_COMMANDS = Object.values(COMMANDS)
+  .filter(c => !DISABLE_RECEIVE_AUDIO || c !== COMMANDS.OUTPUT)
+  .map(c => ({
+    command: c.name,
+    description: c.description
+  }));
 import { createStartHandler } from './handlers/start.js';
 import { createNewHandler } from './handlers/new.js';
 import { createJoinHandler } from './handlers/join.js';
@@ -28,13 +29,17 @@ bot.command(COMMANDS.NEW.name, createNewHandler());
 bot.command(COMMANDS.JOIN.name, createJoinHandler());
 bot.command(COMMANDS.LEAVE.name, createLeaveHandler());
 bot.command(COMMANDS.LANG.name, createLangHandler());
-bot.command(COMMANDS.OUTPUT.name, createOutputHandler());
+if (!DISABLE_RECEIVE_AUDIO) {
+  bot.command(COMMANDS.OUTPUT.name, createOutputHandler());
+}
 
 // Action handlers
 bot.action(/lang:(.+)/, createLangActionHandler());
 bot.action(/leave:(.+)/, createLeaveActionHandler());
 bot.action(/send:(.+):(.+):(.+)/, createSendActionHandler(openai));
-bot.action(/output:(.+)/, createOutputActionHandler());
+if (!DISABLE_RECEIVE_AUDIO) {
+  bot.action(/output:(.+)/, createOutputActionHandler());
+}
 
 // Message handlers
 const handleMessage = createMessageHandler(openai);

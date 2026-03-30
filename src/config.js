@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 export const SUPPORTED_LANGUAGES = {
   'af': { name: 'Afrikaans', native: 'Afrikaans', flag: '🇿🇦' },
   'ar': { name: 'Arabic', native: 'العربية', flag: '🇸🇦' },
@@ -67,3 +69,5 @@ export const COMMANDS = {
 };
 
 export const MAX_MESSAGE_LENGTH = 500;
+
+export const DISABLE_RECEIVE_AUDIO = process.env.DISABLE_RECEIVE_AUDIO === 'true';

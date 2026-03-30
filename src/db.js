@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { randomBytes } from 'crypto';
 import { mkdirSync } from 'fs';
+import { DISABLE_RECEIVE_AUDIO } from './config.js';
 
 mkdirSync('./data', { recursive: true });
 const db = new sqlite3.Database('./data/bot.db');
@@ -85,6 +86,9 @@ export async function setUserOutput(userId, output) {
 }
 
 export async function getUserOutput(userId) {
+  if (DISABLE_RECEIVE_AUDIO) {
+    return 'text';
+  }
   const row = await dbGet('SELECT output FROM users WHERE user_id = ?', [userId]);
   return row ? row.output : 'text';
 }
