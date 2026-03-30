@@ -1,6 +1,6 @@
 import { Markup } from 'telegraf';
 import { SUPPORTED_LANGUAGES } from './config.js';
-import { getUserConversations, getConversationPartnerInfo, getUserLanguage } from './db.js';
+import { getActiveConversations, getConversationPartnerInfo, getUserLanguage } from './db.js';
 import { randomBytes } from 'crypto';
 
 // Temporary storage for message text (to avoid exceeding Telegram's 64-byte callback data limit)
@@ -36,8 +36,7 @@ export function createLanguageKeyboard() {
 }
 
 export async function createPartnerSelectionKeyboard(userId, messageText, audioData = null, voiceBase64 = null) {
-  const conversations = await getUserConversations(userId);
-  const activeConversations = conversations.filter(c => c.participant_id !== null);
+  const activeConversations = await getActiveConversations(userId);
   const buttons = [];
   const messageId = storeMessage(messageText, audioData, voiceBase64);
 
@@ -62,8 +61,7 @@ export async function createPartnerSelectionKeyboard(userId, messageText, audioD
 }
 
 export async function createLeaveConversationKeyboard(userId) {
-  const conversations = await getUserConversations(userId);
-  const activeConversations = conversations.filter(c => c.participant_id !== null);
+  const activeConversations = await getActiveConversations(userId);
   const buttons = [];
 
   for (const conv of activeConversations) {

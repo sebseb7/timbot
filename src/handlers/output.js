@@ -1,5 +1,4 @@
 import { Markup } from 'telegraf';
-import { COMMANDS } from '../config.js';
 import { getOrCreateUser, setUserOutput, getUserOutput, getUserLanguage } from '../db.js';
 import { translateGUI } from '../translations.js';
 

@@ -1,4 +1,4 @@
-import { getOrCreateUser, getUserLanguage, getUserConversations, leaveConversation, getConversationPartnerInfo } from '../db.js';
+import { getOrCreateUser, getUserLanguage, getActiveConversations, leaveConversation, getConversationPartnerInfo } from '../db.js';
 import { translateGUI } from '../translations.js';
 import { createLeaveConversationKeyboard } from '../keyboards.js';
 import { Markup } from 'telegraf';
@@ -8,8 +8,7 @@ export function createLeaveHandler() {
     const user = await getOrCreateUser(ctx.from.id, ctx.from.username, ctx.from.language_code, ctx.from.first_name);
     const lang = user.language;
 
-    const conversations = await getUserConversations(ctx.from.id);
-    const activeConversations = conversations.filter(c => c.participant_id !== null);
+    const activeConversations = await getActiveConversations(ctx.from.id);
 
     if (activeConversations.length === 0) {
       const msg = translateGUI('no_active_conv', lang);

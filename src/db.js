@@ -1,16 +1,14 @@
 import sqlite3 from 'sqlite3';
 import { randomBytes } from 'crypto';
 import { mkdirSync } from 'fs';
+import { promisify } from 'util';
 import { DISABLE_RECEIVE_AUDIO } from './config.js';
 
 mkdirSync('./data', { recursive: true });
 const db = new sqlite3.Database('./data/bot.db');
 
-// Enable foreign keys
-db.run('PRAGMA foreign_keys = ON');
-
 // Promisify database operations
-const dbRun = (sql, params = []) => 
+const dbRun = (sql, params = []) =>
   new Promise((resolve, reject) => {
     db.run(sql, params, function(err) {
       if (err) reject(err);
@@ -18,21 +16,8 @@ const dbRun = (sql, params = []) =>
     });
   });
 
-const dbGet = (sql, params = []) =>
-  new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-
-const dbAll = (sql, params = []) =>
-  new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
+const dbGet = promisify(db.get.bind(db));
+const dbAll = promisify(db.all.bind(db));
 
 // Create tables
 db.serialize(() => {
@@ -49,14 +34,13 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS conversations (
       id TEXT PRIMARY KEY,
       creator_id INTEGER,
-      participant_id INTEGER,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      participant_id INTEGER
     )
   `);
 });
 
 export async function getOrCreateUser(userId, username, languageCode = 'en', firstName = null) {
-  let user = await dbGet('SELECT * FROM users WHERE user_id = ?', [userId]);
+  let user = await dbGet('SELECT user_id, username, language FROM users WHERE user_id = ?', [userId]);
 
   if (!user) {
     const name = username ? `@${username}` : (firstName || null);
@@ -100,7 +84,7 @@ export async function createConversation(creatorId) {
 }
 
 export async function joinConversation(code, participantId) {
-  const conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [code]);
+  const conversation = await dbGet('SELECT id, creator_id, participant_id FROM conversations WHERE id = ?', [code]);
 
   if (!conversation) {
     return { error: 'Conversation not found' };
@@ -114,6 +98,17 @@ export async function joinConversation(code, participantId) {
     return { error: 'Already in this conversation' };
   }
 
+  // Check if already paired with this user in any conversation (either direction)
+  const existingPair = await dbGet(`
+    SELECT id FROM conversations
+    WHERE (creator_id = ? AND participant_id = ?)
+       OR (creator_id = ? AND participant_id = ?)
+  `, [conversation.creator_id, participantId, participantId, conversation.creator_id]);
+
+  if (existingPair) {
+    return { error: 'Already in this conversation' };
+  }
+
   if (conversation.participant_id) {
     return { error: 'Conversation is full' };
   }
@@ -124,7 +119,7 @@ export async function joinConversation(code, participantId) {
 }
 
 export async function leaveConversation(userId, conversationId) {
-  const conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [conversationId]);
+  const conversation = await dbGet('SELECT id, creator_id, participant_id FROM conversations WHERE id = ?', [conversationId]);
 
   if (!conversation) {
     return { error: 'Conversation not found' };
@@ -141,16 +136,9 @@ export async function leaveConversation(userId, conversationId) {
   return { success: true, conversationId, otherUserId };
 }
 
-export async function getUserConversations(userId) {
-  return await dbAll(`
-    SELECT * FROM conversations 
-    WHERE creator_id = ? OR participant_id = ?
-  `, [userId, userId]);
-}
-
 export async function getActiveConversations(userId) {
   return await dbAll(`
-    SELECT * FROM conversations 
+    SELECT id FROM conversations
     WHERE (creator_id = ? OR participant_id = ?) AND participant_id IS NOT NULL
   `, [userId, userId]);
 }
@@ -162,5 +150,3 @@ export async function getConversationPartnerInfo(conversationId, userId) {
     WHERE c.id = ? AND u.user_id != ?
   `, [conversationId, userId]);
 }
-
-export default db;

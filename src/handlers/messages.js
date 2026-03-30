@@ -1,5 +1,5 @@
 import { Markup, Input } from 'telegraf';
-import { getOrCreateUser, getUserLanguage, getUserConversations, getConversationPartnerInfo, getUserOutput } from '../db.js';
+import { getOrCreateUser, getUserLanguage, getActiveConversations, getConversationPartnerInfo, getUserOutput } from '../db.js';
 import { translateGUI, translate } from '../translations.js';
 import { createPartnerSelectionKeyboard } from '../keyboards.js';
 import { MAX_MESSAGE_LENGTH, DISABLE_RECEIVE_AUDIO } from '../config.js';
@@ -22,8 +22,7 @@ export function createMessageHandler(openai) {
       return;
     }
 
-    const conversations = await getUserConversations(ctx.from.id);
-    const activeConversations = conversations.filter(c => c.participant_id !== null);
+    const activeConversations = await getActiveConversations(ctx.from.id);
 
     if (activeConversations.length === 0) {
       await ctx.reply(translateGUI('not_in_conv', lang));
@@ -105,8 +104,7 @@ export function createVoiceHandler(openai) {
     const lang = user.language;
 
     // Get conversations to check if any exist
-    const conversations = await getUserConversations(ctx.from.id);
-    const activeConversations = conversations.filter(c => c.participant_id !== null);
+    const activeConversations = await getActiveConversations(ctx.from.id);
 
     if (activeConversations.length === 0) {
       await ctx.reply(translateGUI('not_in_conv', lang));
