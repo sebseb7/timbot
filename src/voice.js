@@ -94,7 +94,7 @@ export async function transcribeVoice(buffer, openai) {
   });
   const whisperTime = performance.now() - startWhisper;
 
-  console.log('whisper-1 transcription:', transcription.text, '\nwhisper-1_time:', whisperTime.toFixed(0) + 'ms');
+  console.log('whisper-1_time:', whisperTime.toFixed(0) + 'ms');
 
   return transcription.text ?? '';
 }
