@@ -1,4 +1,4 @@
-import { SUPPORTED_LANGUAGES } from './config.js';
+import { SUPPORTED_LANGUAGES, OPENAI_MODEL, supportsReasoningEffortNone } from './config.js';
 
 // Load English as the base
 import en from './i18n/en.js';
@@ -90,9 +90,8 @@ export function translateGUI(text, targetLang) {
 }
 
 export async function translate(text, targetLang, openai) {
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4.1-mini',
+  const requestOptions = {
+    model: OPENAI_MODEL,
     messages: [
       {
         role: 'system',
@@ -100,7 +99,13 @@ export async function translate(text, targetLang, openai) {
       },
       { role: 'user', content: text }
     ]
-  });
-  return response.choices[0].message.content;
+  };
 
+  // Only add reasoning_effort: "none" for models that support it (gpt-5.1, gpt-5.2, gpt-5.4)
+  if (supportsReasoningEffortNone(OPENAI_MODEL)) {
+    requestOptions.reasoning_effort = "none";
+  }
+
+  const response = await openai.chat.completions.create(requestOptions);
+  return response.choices[0].message.content;
 }

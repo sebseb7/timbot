@@ -71,3 +71,49 @@ export const COMMANDS = {
 export const MAX_MESSAGE_LENGTH = 500;
 
 export const DISABLE_RECEIVE_AUDIO = process.env.DISABLE_RECEIVE_AUDIO === 'true';
+
+export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+
+export const USE_LOCAL_WHISPER = process.env.USE_LOCAL_WHISPER === 'true';
+
+export const WHISPER_MODEL_URL = process.env.WHISPER_MODEL_URL;
+
+export const WHISPER_CPP_PATH = process.env.WHISPER_CPP_PATH || 'whisper-cli';
+
+/**
+ * Check if a model supports reasoning_effort parameter
+ * Only GPT-5+ reasoning models support this parameter
+ * - gpt-5: supports reasoning_effort but NOT "none"
+ * - gpt-5.1, gpt-5.2, gpt-5.4: support reasoning_effort including "none"
+ * - gpt-5-mini: support reasoning_effort but NOT "none"
+ * - gpt-5.4-mini: support reasoning_effort including "none"
+ * - gpt-4.1, gpt-4.1-mini: do NOT support reasoning_effort at all
+ */
+export function supportsReasoningEffort(model) {
+  // Must start with gpt-5
+  if (!model.startsWith('gpt-5')) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Check if a model supports reasoning_effort: "none"
+ * Only gpt-5.1, gpt-5.2, gpt-5.4 (non-mini) support "none" value
+ * gpt-5-mini and plain gpt-5 do NOT support "none"
+ */
+export function supportsReasoningEffortNone(model) {
+  if (!supportsReasoningEffort(model)) {
+    return false;
+  }
+  // gpt-5-mini does not support "none", but gpt-5.4-mini does
+  if (model === 'gpt-5-mini') {
+    return false;
+  }
+  // Plain gpt-5 does not support "none"
+  if (model === 'gpt-5') {
+    return false;
+  }
+  // gpt-5.1, gpt-5.2, gpt-5.4, etc. support "none"
+  return true;
+}

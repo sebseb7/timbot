@@ -1,6 +1,7 @@
 import { Telegraf } from 'telegraf';
 import OpenAI from 'openai';
 import { COMMANDS, DISABLE_RECEIVE_AUDIO } from './config.js';
+import { initLocalWhisper } from './voice.js';
 
 const BOT_COMMANDS = Object.values(COMMANDS)
   .filter(c => !DISABLE_RECEIVE_AUDIO || c !== COMMANDS.OUTPUT)
@@ -47,6 +48,9 @@ bot.on('text', (ctx) => handleMessage(ctx, ctx.message.text, false));
 bot.on('voice', createVoiceHandler(openai));
 
 // Start bot
+initLocalWhisper().catch(err => {
+  console.error('Failed to initialize local Whisper:', err.message);
+});
 bot.launch();
 console.log('Bot started!');
 
